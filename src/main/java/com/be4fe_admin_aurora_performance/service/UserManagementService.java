@@ -164,7 +164,8 @@ public class UserManagementService {
         if (userOpt.isEmpty()) return null;
 
         Map<String, Object> user = userOpt.get();
-        if (!"AD".equals(getString(user, "ruolo"))) return null;
+        String ruolo = getString(user, "ruolo");
+        if (!"AD".equals(ruolo) && !"SC".equals(ruolo)) return null;
 
         return user;
     }
