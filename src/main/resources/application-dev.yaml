@@ -1,0 +1,10 @@
+# Dev profile
+logging:
+  level:
+    com.be4fe_admin_aurora_performance: DEBUG
+    org.springframework.security: INFO
+    org.springframework.web.client: DEBUG
+
+springdoc:
+  swagger-ui:
+    enabled: true
