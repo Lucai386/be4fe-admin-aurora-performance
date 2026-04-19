@@ -11,4 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SwitchEnteRequest {
     private String codiceIstat;
+    private String nome;
 }

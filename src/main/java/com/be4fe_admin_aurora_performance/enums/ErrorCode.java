@@ -57,7 +57,6 @@ public enum ErrorCode {
     ATTIVITA_NOT_AUTHORIZED("ATTIVITA_NOT_AUTHORIZED"),
     ASSEGNAZIONE_NOT_FOUND("ASSEGNAZIONE_NOT_FOUND"),
     ASSEGNAZIONE_ALREADY_EXISTS("ASSEGNAZIONE_ALREADY_EXISTS"),
-    TIMESHEET_ENTRY_NOT_FOUND("TIMESHEET_ENTRY_NOT_FOUND"),
     USER_NOT_ASSIGNED("USER_NOT_ASSIGNED"),
     INVALID_PERCENTAGE("INVALID_PERCENTAGE"),
     STEP_NOT_FOUND("STEP_NOT_FOUND"),
@@ -119,7 +118,6 @@ public enum ErrorCode {
             case ATTIVITA_NOT_AUTHORIZED -> "Non autorizzato a gestire l'attività";
             case ASSEGNAZIONE_NOT_FOUND -> "Assegnazione non trovata";
             case ASSEGNAZIONE_ALREADY_EXISTS -> "Utente già assegnato a questa attività";
-            case TIMESHEET_ENTRY_NOT_FOUND -> "Entry timesheet non trovata";
             case USER_NOT_ASSIGNED -> "L'utente non è assegnato a questa attività";
             case INVALID_PERCENTAGE -> "Percentuale non valida (deve essere tra 0 e 100)";
             case STEP_NOT_FOUND -> "Step non trovato";

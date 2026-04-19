@@ -42,7 +42,8 @@ public class BffAdminSecurityConfig {
             "/swagger-ui.html",
             "/api-docs/**",
             "/v3/api-docs/**",
-            "/actuator/health"
+            "/actuator/health",
+            "/api/admin/auth/**"
     };
 
     @Bean

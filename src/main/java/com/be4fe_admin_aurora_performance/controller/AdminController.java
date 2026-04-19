@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,9 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.be4fe_admin_aurora_performance.dto.admin.CreateUserRequest;
 import com.be4fe_admin_aurora_performance.dto.admin.CreateUserResponse;
 import com.be4fe_admin_aurora_performance.dto.admin.DeleteUserResponse;
+import com.be4fe_admin_aurora_performance.dto.admin.ListEntiResponse;
 import com.be4fe_admin_aurora_performance.dto.admin.ListUsersResponse;
 import com.be4fe_admin_aurora_performance.dto.admin.SwitchEnteRequest;
 import com.be4fe_admin_aurora_performance.dto.admin.SwitchEnteResponse;
+import com.be4fe_admin_aurora_performance.dto.admin.UpdateUserRequest;
 import com.be4fe_admin_aurora_performance.service.AdminService;
 import com.be4fe_admin_aurora_performance.service.UserManagementService;
 
@@ -86,6 +89,26 @@ public class AdminController {
         }
     }
 
+    @PutMapping("/users/{userId}")
+    @Operation(summary = "Aggiorna utente", description = "Aggiorna i dati di un utente dell'ente corrente")
+    public ResponseEntity<CreateUserResponse> updateUser(
+            Authentication authentication,
+            @PathVariable Integer userId,
+            @Valid @RequestBody UpdateUserRequest request) {
+        log.debug("Update user request received for userId: {}", userId);
+        CreateUserResponse response = userManagementService.updateUser(authentication, userId, request);
+
+        if ("OK".equals(response.getResult())) {
+            return ResponseEntity.ok(response);
+        } else if ("NOT_AUTHORIZED".equals(response.getErrorCode())) {
+            return ResponseEntity.status(403).body(response);
+        } else if ("USER_NOT_FOUND".equals(response.getErrorCode())) {
+            return ResponseEntity.status(404).body(response);
+        } else {
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     @DeleteMapping("/users/{userId}")
     @Operation(summary = "Elimina utente", description = "Elimina un utente dall'ente corrente")
     public ResponseEntity<DeleteUserResponse> deleteUser(
@@ -100,6 +123,20 @@ public class AdminController {
             return ResponseEntity.status(403).body(response);
         } else if ("USER_NOT_FOUND".equals(response.getErrorCode())) {
             return ResponseEntity.status(404).body(response);
+        } else {
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/enti")
+    @Operation(summary = "Lista enti", description = "Elenca tutti gli enti (comuni) disponibili nel sistema")
+    public ResponseEntity<ListEntiResponse> listEnti(Authentication authentication) {
+        log.debug("List enti request received");
+        ListEntiResponse response = adminService.listEnti(authentication);
+        if ("OK".equals(response.getResult())) {
+            return ResponseEntity.ok(response);
+        } else if ("NOT_AUTHORIZED".equals(response.getErrorCode())) {
+            return ResponseEntity.status(403).body(response);
         } else {
             return ResponseEntity.badRequest().body(response);
         }

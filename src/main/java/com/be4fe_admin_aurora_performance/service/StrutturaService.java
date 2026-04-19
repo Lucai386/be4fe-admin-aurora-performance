@@ -431,6 +431,9 @@ public class StrutturaService {
         String ruolo = getString(user, "ruolo");
         if (!AUTHORIZED_ROLES.contains(ruolo)) return null;
 
+        String ci = getString(user, "codiceIstat");
+        if (ci != null && !ci.isBlank()) CoreApiClient.setTenant(ci.trim());
+
         return user;
     }
 

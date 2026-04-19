@@ -64,6 +64,11 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
+		<!-- Apache HttpClient5 (needed for PATCH support in RestTemplate) -->
+		<dependency>
+			<groupId>org.apache.httpcomponents.client5</groupId>
+			<artifactId>httpclient5</artifactId>
+		</dependency>
 		<!-- Actuator + Prometheus metrics -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

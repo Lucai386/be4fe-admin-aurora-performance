@@ -1,20 +1,26 @@
 package com.be4fe_admin_aurora_performance.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Client HTTP per comunicare con core-aurora-performance.
@@ -26,6 +32,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 public class CoreApiClient {
+
+    private static final ThreadLocal<String> CURRENT_TENANT = new ThreadLocal<>();
+
+    public static void setTenant(String codiceIstat) { CURRENT_TENANT.set(codiceIstat); }
+    public static void clearTenant() { CURRENT_TENANT.remove(); }
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
@@ -74,6 +85,10 @@ public class CoreApiClient {
         HttpHeaders h = new HttpHeaders();
         h.setBearerAuth(getServiceToken());
         h.setContentType(MediaType.APPLICATION_JSON);
+        String tenant = CURRENT_TENANT.get();
+        if (tenant != null && !tenant.isBlank()) {
+            h.set("X-Tenant-Id", tenant);
+        }
         return h;
     }
 
@@ -245,6 +260,45 @@ public class CoreApiClient {
                 new ParameterizedTypeReference<>() {});
     }
 
+    public Optional<Map> getDupById(Long id) {
+        return getOne("/internal/dup/" + id, Map.class);
+    }
+
+    public Optional<Map> createDup(Map<String, Object> payload) {
+        return post("/internal/dup", payload, Map.class);
+    }
+
+    public Optional<Map> updateDup(Long id, Map<String, Object> payload) {
+        return put("/internal/dup/" + id, payload, Map.class);
+    }
+
+    public boolean deleteDup(Long id) {
+        return deleteReturningStatus("/internal/dup/" + id);
+    }
+
+    // ─── LPM ──────────────────────────────────────────────────────────────────
+
+    public List<Map> getLpm(String codiceIstat) {
+        return getList("/internal/lpm?codiceIstat=" + codiceIstat,
+                new ParameterizedTypeReference<>() {});
+    }
+
+    public Optional<Map> getLpmById(Long id) {
+        return getOne("/internal/lpm/" + id, Map.class);
+    }
+
+    public Optional<Map> createLpm(Map<String, Object> payload) {
+        return post("/internal/lpm", payload, Map.class);
+    }
+
+    public Optional<Map> updateLpm(Long id, Map<String, Object> payload) {
+        return put("/internal/lpm/" + id, payload, Map.class);
+    }
+
+    public boolean deleteLpm(Long id) {
+        return deleteReturningStatus("/internal/lpm/" + id);
+    }
+
     // ─── Obiettivi ────────────────────────────────────────────────────────────
 
     public List<Map> getObiettivi(String codiceIstat, Long utenteId) {
@@ -264,5 +318,15 @@ public class CoreApiClient {
         if (strutturaId != null) builder.queryParam("strutturaId", strutturaId);
         return getList(builder.build().toUriString().replace(coreBaseUrl, ""),
                 new ParameterizedTypeReference<>() {});
+    }
+
+    // ─── Enti ─────────────────────────────────────────────────────────────────
+
+    public List<Map> getEnti() {
+        return getList("/internal/enti", new ParameterizedTypeReference<>() {});
+    }
+
+    public Optional<Map> createEnte(String codiceIstat, String nome) {
+        return post("/internal/enti", Map.of("codiceIstat", codiceIstat, "nome", nome), Map.class);
     }
 }

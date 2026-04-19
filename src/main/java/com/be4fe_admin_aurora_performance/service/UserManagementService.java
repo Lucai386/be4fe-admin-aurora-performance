@@ -14,10 +14,16 @@ import com.be4fe_admin_aurora_performance.dto.admin.CreateUserRequest;
 import com.be4fe_admin_aurora_performance.dto.admin.CreateUserResponse;
 import com.be4fe_admin_aurora_performance.dto.admin.DeleteUserResponse;
 import com.be4fe_admin_aurora_performance.dto.admin.ListUsersResponse;
+import com.be4fe_admin_aurora_performance.dto.admin.UpdateUserRequest;
 import com.be4fe_admin_aurora_performance.dto.admin.UserDto;
+import static com.be4fe_admin_aurora_performance.enums.AppConstants.MSG_CANNOT_DELETE_ADMIN;
+import static com.be4fe_admin_aurora_performance.enums.AppConstants.MSG_CANNOT_DELETE_OTHER_ENTE;
+import static com.be4fe_admin_aurora_performance.enums.AppConstants.MSG_CF_EXISTS;
+import static com.be4fe_admin_aurora_performance.enums.AppConstants.MSG_KEYCLOAK_ERROR;
+import static com.be4fe_admin_aurora_performance.enums.AppConstants.MSG_NO_ENTE;
+import static com.be4fe_admin_aurora_performance.enums.AppConstants.MSG_USER_NOT_AUTHORIZED;
+import static com.be4fe_admin_aurora_performance.enums.AppConstants.MSG_USER_NOT_FOUND;
 import com.be4fe_admin_aurora_performance.enums.ErrorCode;
-
-import static com.be4fe_admin_aurora_performance.enums.AppConstants.*;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -110,6 +116,44 @@ public class UserManagementService {
         return CreateUserResponse.success(toDto(savedOpt.get()));
     }
 
+    // ─── Update user ──────────────────────────────────────────────────────────
+
+    public CreateUserResponse updateUser(Authentication authentication, Integer userId, UpdateUserRequest request) {
+        Map<String, Object> admin = getAdminUser(authentication);
+        if (admin == null) {
+            return CreateUserResponse.error(ErrorCode.NOT_AUTHORIZED, MSG_USER_NOT_AUTHORIZED);
+        }
+
+        String codiceIstat = getString(admin, "codiceIstat");
+        if (codiceIstat == null || codiceIstat.isBlank()) {
+            return CreateUserResponse.error(ErrorCode.NO_ENTE, MSG_NO_ENTE);
+        }
+
+        Optional<Map> userOpt = coreApiClient.getUserById(userId.longValue());
+        if (userOpt.isEmpty()) {
+            return CreateUserResponse.error(ErrorCode.USER_NOT_FOUND, MSG_USER_NOT_FOUND);
+        }
+
+        Map<String, Object> existingUser = userOpt.get();
+        if (!codiceIstat.trim().equals(getString(existingUser, "codiceIstat"))) {
+            return CreateUserResponse.error(ErrorCode.NOT_AUTHORIZED, MSG_CANNOT_DELETE_OTHER_ENTE);
+        }
+
+        Map<String, Object> payload = new java.util.HashMap<>();
+        if (request.getNome() != null) payload.put("nome", request.getNome());
+        if (request.getCognome() != null) payload.put("cognome", request.getCognome());
+        if (request.getEmail() != null) payload.put("email", request.getEmail());
+        if (request.getRuolo() != null) payload.put("ruolo", request.getRuolo());
+
+        Optional<Map> updatedOpt = coreApiClient.updateUser(userId.longValue(), payload);
+        if (updatedOpt.isEmpty()) {
+            return CreateUserResponse.error(ErrorCode.INTERNAL_ERROR, "Errore aggiornamento utente");
+        }
+
+        log.info("Updated user {} for ente {}", userId, codiceIstat);
+        return CreateUserResponse.success(toDto(updatedOpt.get()));
+    }
+
     // ─── Delete user ──────────────────────────────────────────────────────────
 
     public DeleteUserResponse deleteUser(Authentication authentication, Integer userId) {
@@ -166,6 +210,9 @@ public class UserManagementService {
         Map<String, Object> user = userOpt.get();
         String ruolo = getString(user, "ruolo");
         if (!"AD".equals(ruolo) && !"SC".equals(ruolo)) return null;
+
+        String ci = getString(user, "codiceIstat");
+        if (ci != null && !ci.isBlank()) CoreApiClient.setTenant(ci.trim());
 
         return user;
     }

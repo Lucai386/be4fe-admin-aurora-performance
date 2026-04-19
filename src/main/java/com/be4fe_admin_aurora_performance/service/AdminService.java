@@ -3,6 +3,7 @@ package com.be4fe_admin_aurora_performance.service;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -11,6 +12,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import com.be4fe_admin_aurora_performance.client.CoreApiClient;
+import com.be4fe_admin_aurora_performance.dto.admin.ListEntiResponse;
 import com.be4fe_admin_aurora_performance.dto.admin.SwitchEnteRequest;
 import com.be4fe_admin_aurora_performance.dto.admin.SwitchEnteResponse;
 import com.be4fe_admin_aurora_performance.dto.session.SessionInfoDto;
@@ -29,6 +31,28 @@ public class AdminService {
 
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ISO_OFFSET_DATE_TIME
             .withZone(ZoneId.systemDefault());
+
+    @SuppressWarnings("unchecked")
+    public ListEntiResponse listEnti(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ListEntiResponse.error(ErrorCode.SESSION_INVALID);
+        }
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        Optional<Map> userOpt = coreApiClient.getUserByKeycloakId(jwt.getSubject());
+        if (userOpt.isEmpty()) return ListEntiResponse.error(ErrorCode.USER_NOT_FOUND);
+        if (!"AD".equals(userOpt.get().get("ruolo"))) return ListEntiResponse.error(ErrorCode.NOT_AUTHORIZED);
+
+        List<Map> entiMaps = coreApiClient.getEnti();
+        List<ListEntiResponse.EnteDto> enti = entiMaps.stream()
+                .map(m -> ListEntiResponse.EnteDto.builder()
+                        .codiceIstat(getString(m, "codiceIstat"))
+                        .nome(getString(m, "nome"))
+                        .numUtenti(getLong(m, "numUtenti"))
+                        .numStrutture(getLong(m, "numStrutture"))
+                        .build())
+                .toList();
+        return ListEntiResponse.success(enti);
+    }
 
     public SwitchEnteResponse switchEnte(Authentication authentication, SwitchEnteRequest request) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -55,6 +79,13 @@ public class AdminService {
         String codiceIstat = request.getCodiceIstat();
         if (codiceIstat == null || codiceIstat.isBlank()) {
             return SwitchEnteResponse.error(ErrorCode.CODICE_ISTAT_REQUIRED);
+        }
+
+        // Save ente name if provided
+        if (request.getNome() != null && !request.getNome().isBlank()) {
+            log.info("Creating/updating ente {} with nome: {}", codiceIstat.trim(), request.getNome().trim());
+            Optional<Map> enteResult = coreApiClient.createEnte(codiceIstat.trim(), request.getNome().trim());
+            log.info("Ente creation result: {}", enteResult.isPresent() ? "OK" : "FAILED");
         }
 
         Long userId = getLong(user, "id");
