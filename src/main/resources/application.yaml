@@ -36,10 +36,9 @@ server:
 
 springdoc:
   api-docs:
-    path: /api-docs
+    enabled: false
   swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
+    enabled: false
 
 logging:
   level:
@@ -52,7 +51,7 @@ management:
         include: "health,prometheus,metrics,info"
   endpoint:
     health:
-      show-details: always
+      show-details: never
     prometheus:
       enabled: true
   metrics:

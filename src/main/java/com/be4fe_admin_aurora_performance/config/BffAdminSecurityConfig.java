@@ -1,5 +1,12 @@
 package com.be4fe_admin_aurora_performance.config;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,9 +27,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 /**
  * Security del BFF Admin: valida JWT Keycloak e richiede ruolo AD o SC.
  */
@@ -38,11 +42,8 @@ public class BffAdminSecurityConfig {
     private String realm;
 
     private static final String[] PUBLIC_ENDPOINTS = {
-            "/swagger-ui/**",
-            "/swagger-ui.html",
-            "/api-docs/**",
-            "/v3/api-docs/**",
             "/actuator/health",
+            "/actuator/prometheus",
             "/api/admin/auth/**"
     };
 
@@ -82,9 +83,13 @@ public class BffAdminSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(List.of("*"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:4200", "http://localhost:4201",
+                "http://localhost:5173", "http://localhost:3000",
+                "https://*.aurora-performance.it"
+        ));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Tenant-Id", "X-Requested-With", "Origin", "Accept"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
